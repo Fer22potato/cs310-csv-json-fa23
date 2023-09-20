@@ -2,14 +2,17 @@ package edu.jsu.mcis.cs310;
 
 import com.github.cliftonlabs.json_simple.*;
 import com.opencsv.*;
+import com.opencsv.CSVWriter;
+import java.util.Arrays;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 public class Converter {
-    
     /*
         
         Consider the following CSV data, a portion of a database of episodes of
         the classic "Star Trek" television series:
-        
+     
         "ProdNum","Title","Season","Episode","Stardate","OriginalAirdate","RemasteredAirdate"
         "6149-02","Where No Man Has Gone Before","1","01","1312.4 - 1313.8","9/22/1966","1/20/2007"
         "6149-03","The Corbomite Maneuver","1","02","1512.2 - 1514.1","11/10/1966","12/9/2006"
@@ -70,16 +73,42 @@ public class Converter {
         Exchange" lecture notes for more details, including examples.
         
     */
-    
-    @SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
-        
         String result = "{}"; // default return value; replace later!
-        
         try {
-        
             // INSERT YOUR CODE HERE
+            CSVReader csvReader = new CSVReader(new StringReader (csvString));
+            JsonObject obj = new JsonObject();
+            JsonArray prod_num = new JsonArray();
+            JsonArray col_heading = new JsonArray();
+            JsonArray dataA = new JsonArray();
+            String[] rows = csvReader.readNext();
             
+            for (String head: rows){
+                col_heading.add(head);
+            }
+            rows = csvReader.readNext();
+            while (rows != null){
+                prod_num.add(rows[0]);
+                JsonArray nData = new JsonArray();
+                for (int i= 1; i < rows.length; i++){
+                    String words = rows[i];
+                    if(col_heading.toArray()[i].equals("Episode")|| col_heading.toArray()[i].equals("Season")){
+                    int num = Integer.parseInt(words);
+                    nData.add(num);
+                }
+                    else{
+                        nData.add(words);
+                    }
+                }
+                dataA.add(nData);
+                obj.put("ProdNums", prod_num);
+                obj.put("ColHeadings", col_heading);
+                obj.put("Data", dataA);
+                rows = csvReader.readNext();
+            }
+            result = Jsoner.serialize(obj);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -91,13 +120,37 @@ public class Converter {
     
     @SuppressWarnings("unchecked")
     public static String jsonToCsv(String jsonString) {
-        
         String result = ""; // default return value; replace later!
-        
         try {
-            
             // INSERT YOUR CODE HERE
+            JsonObject obj = Jsoner.deserialize(jsonString, new JsonObject());
+            JsonArray prod_num = (JsonArray)obj.get("ProdNums");
+            JsonArray col_heading = (JsonArray)obj.get("ColHeadings");
+            JsonArray dataA = (JsonArray)obj.get("Data");
+            StringWriter writer = new StringWriter();
+            CSVWriter csvWriter = new CSVWriter(writer, ',', '"', '\\', "\n");
+            String[]headings = Arrays.copyOf(col_heading.toArray(), col_heading.toArray().length, String[].class);
             
+            csvWriter.writeNext(headings);
+            for(int i = 0; i < dataA.size(); i++){
+                String[] nAray = new String[col_heading.size()];
+                nAray[0] = (String)prod_num.getString(i);
+                JsonArray nData = (JsonArray)dataA.getCollection(i);
+                for (int x = 1; x <(nData.size()+1); x++){
+                    String words;
+                    words = ((JsonArray)dataA.get(i)).get(x-1).toString();
+                    
+                    if(headings[x].equals("Episode")){
+                        nAray[x]= String.format("%02d", Integer.valueOf(words));
+                    }
+                    else{
+                        System.out.println(headings[x]);
+                        nAray[x]= words;
+                    }
+                }
+                csvWriter.writeNext(nAray);
+            }
+            result = writer.toString();
         }
         catch (Exception e) {
             e.printStackTrace();
