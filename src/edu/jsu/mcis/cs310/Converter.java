@@ -136,16 +136,16 @@ public class Converter {
                 String[] nAray = new String[col_heading.size()];
                 nAray[0] = (String)prod_num.getString(i);
                 JsonArray nData = (JsonArray)dataA.getCollection(i);
-                for (int x = 1; x <(nData.size()+1); x++){
+                for (int j = 1; j <(nData.size()+1); j++){
                     String words;
-                    words = ((JsonArray)dataA.get(i)).get(x-1).toString();
+                    words = ((JsonArray)dataA.get(i)).get(j-1).toString();
                     
-                    if(headings[x].equals("Episode")){
-                        nAray[x]= String.format("%02d", Integer.valueOf(words));
+                    if(headings[j].equals("Episode")){
+                        nAray[j]= String.format("%02d", Integer.valueOf(words));
                     }
                     else{
-                        System.out.println(headings[x]);
-                        nAray[x]= words;
+                        System.out.println(headings[j]);
+                        nAray[j]= words;
                     }
                 }
                 csvWriter.writeNext(nAray);
